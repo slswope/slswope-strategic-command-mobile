@@ -51,6 +51,21 @@ class TestSupplementalFeeds(unittest.TestCase):
         self.assertEqual(river['forecast_category'], 'minor')
         self.assertIsNone(m.parse_river_stage(gauge, {}, self.now)['forecast_peak'])
 
+    def test_corps_lock_zero_missing_and_old_readings(self):
+        newburgh = {'lockNumber': '76', 'lockName': 'Newburgh L/D',
+                    'readingEntryDateTime': '111726:1400', 'totalPendingArrivals': 0,
+                    'totalLocking': 0, 'average24HourDelay': 12, 'notes': 'Main chamber\nNotes'}
+        old = {**newburgh, 'lockNumber': '75', 'lockName': 'Cannelton L/D',
+               'readingEntryDateTime': '111426:1400'}
+        missing = {**newburgh, 'lockNumber': '77', 'lockName': 'John T. Myers',
+                   'totalPendingArrivals': None}
+        parsed = m.parse_corps_locks([{'riverName': 'OHIO RIVER', 'locks': [old, newburgh, missing]}], self.now)
+        self.assertEqual([lock['name'] for lock in parsed['locks']], ['Newburgh', 'John T. Myers'])
+        self.assertEqual(parsed['locks'][0]['pending'], 0)
+        self.assertIsNone(parsed['locks'][1]['pending'])
+        with self.assertRaises(ValueError):
+            m.parse_corps_locks([{'riverName': 'OHIO RIVER', 'locks': [old]}], self.now)
+
     def test_fema_deduplicates_designated_areas(self):
         row = {'state': 'IN', 'disasterNumber': 1234, 'declarationTitle': 'Flooding',
                'declarationDate': '2026-11-15T00:00:00Z', 'declarationType': 'DR'}

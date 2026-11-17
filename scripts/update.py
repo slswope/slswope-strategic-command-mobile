@@ -14,7 +14,7 @@ TRACKS=[
  ('Immediate hazards','connected','NWS point alerts for three Tri-State locations'),
  ('Service continuity','unconnected','FAA, telecom, payment and hospital service feeds pending'),
  ('Supply chain / markets','unconnected','EIA/transport/retail checks pending'),
- ('Global security','unconnected','Official foreign and defense source verification pending'),
+ ('Global security','partial','See the dated, manually reviewed foreign developments briefing'),
  ('Political / governance','unconnected','Official state/local restrictions monitoring pending'),
  ('Public preparedness intent','unconnected','Search/retail indicators require backtesting'),
  ('Overall','not_assessed','No national collapse prediction or all-clear derived'),

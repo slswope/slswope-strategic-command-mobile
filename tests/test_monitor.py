@@ -14,9 +14,26 @@ class TestMonitor(unittest.TestCase):
         self.assertEqual(a['id'],'abc')
         self.assertEqual(a['locations'],[])
     def test_all_tracks_present(self):
-        self.assertEqual(len(m.TRACKS),10)
-    def test_no_false_source_status(self):
-        self.assertNotIn('all clear',m.TRACKS[6][2].lower())
+        self.assertEqual(len(m.TRACKS),9)
+    def test_failed_feed_keeps_coverage_but_marks_health_unavailable(self):
+        feed = {'key': 'water', 'name': 'Water', 'status': 'error', 'checked_at': m.STAMP}
+        tracks = m.track_coverage([feed], None)
+        local = next(track for track in tracks if track['name'] == 'Local essential services')
+        self.assertEqual(local['connection'], 'partial')
+        self.assertEqual(local['covered'], 1)
+        self.assertEqual(local['indicators'][0]['health'], 'unavailable')
+        self.assertEqual(m.local_operations([feed], {}, [])['title'], 'Local checks incomplete')
+
+    def test_public_water_payload_publishes_only_count_and_time(self):
+        row = {'attributes': {'OBJECTID': 1, 'Status': 'Active',
+                             'IssuedDate': 1794877200000, 'Address': 'Not published'}}
+        result = m.parse_evsu_water({'features': [row, row]})
+        self.assertEqual(result['active_count'], 1)
+        self.assertEqual(len(result['issued_at']), 1)
+        self.assertNotIn('Address', str(result))
+        self.assertEqual(m.parse_evsu_water({'features': []})['active_count'], 0)
+        with self.assertRaises(ValueError):
+            m.parse_evsu_water({'features': [], 'exceededTransferLimit': True})
 
 class TestSupplementalFeeds(unittest.TestCase):
     now = m.read_station_time('2026-11-17T20:30:00Z')

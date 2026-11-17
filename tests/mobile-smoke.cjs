@@ -30,7 +30,12 @@ async function checkDashboard() {
         assert.ok(dataset.checked_at, 'Expected data from the published workflow');
         assert.equal(await page.locator('#coverage').innerText(),
           `${dataset.coverage.feeds_ok} / ${dataset.coverage.feeds_total}`);
-        assert.equal(await page.locator('#posture').innerText(), 'NOT ASSESSED');
+        assert.equal(await page.locator('#posture').innerText(), dataset.local_operations.title);
+        assert.equal(await page.locator('#tracks article').count(), dataset.tracks.length);
+        assert.match(await page.locator('#tracks').innerText(), /requirements covered/);
+        await page.locator('#essential-services').getByRole('heading').waitFor();
+        await page.locator('#service-continuity').getByRole('heading', { level: 2 }).waitFor();
+        await page.locator('#cyber-advisories').getByRole('heading').waitFor();
 
         const briefing = await (await foreignDataset).json();
         await page.locator('#foreign-status').filter({ hasText: 'Reviewed ' }).waitFor();

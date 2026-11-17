@@ -20,6 +20,8 @@ async function checkDashboard() {
         const isDataset = response =>
           new URL(response.url()).pathname.endsWith('/data.json') && response.ok();
         const initialDataset = page.waitForResponse(isDataset);
+        const foreignDataset = page.waitForResponse(response =>
+          new URL(response.url()).pathname.endsWith('/foreign.json') && response.ok());
         const response = await page.goto(dashboardUrl);
         assert.ok(response?.ok(), 'Expected GitHub Pages to serve the dashboard');
         const dataset = await (await initialDataset).json();
@@ -29,6 +31,14 @@ async function checkDashboard() {
         assert.equal(await page.locator('#coverage').innerText(),
           `${dataset.coverage.feeds_ok} / ${dataset.coverage.feeds_total}`);
         assert.equal(await page.locator('#posture').innerText(), 'NOT ASSESSED');
+
+        const briefing = await (await foreignDataset).json();
+        await page.locator('#foreign-status').filter({ hasText: 'Reviewed ' }).waitFor();
+        const developments = page.locator('#foreign-items article');
+        assert.equal(await developments.count(), briefing.developments.length);
+        assert.ok(briefing.developments.length > 0, 'Expected reviewed foreign developments');
+        const source = briefing.developments[0].sources[0];
+        assert.equal(await developments.first().getByRole('link', { name: source.name }).getAttribute('href'), source.url);
 
         const refreshed = page.waitForResponse(isDataset);
         await page.getByRole('button', { name: 'Refresh', exact: true }).click();

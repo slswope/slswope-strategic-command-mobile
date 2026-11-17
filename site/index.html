@@ -3,9 +3,12 @@
 .foreign-sources{padding-left:20px;line-height:1.6}.foreign-sources a{overflow-wrap:anywhere}
 </style></head><body><header><div><div class="eyebrow">INTELLIGENCE OPERATIONS</div><div class="brand">Strategic Command</div><div class="small muted">Tri-State monitoring · Evansville / Newburgh / Henderson</div></div><span class="pill">PUBLIC SOURCES</span></header>
 <section class="card"><div class="spaced"><span class="label">NATIONAL / OVERALL ASSESSMENT</span><button id="refresh">Refresh</button></div><div class="stat warning" id="posture">NOT ASSESSED</div><div class="footnote" id="note">Awaiting source checks. No all-clear implied.</div><div class="small muted" style="margin-top:12px" id="updated">Last checked: pending</div></section>
-<section class="panel"><div class="card"><div class="label">Official checks passing</div><div class="stat" id="coverage">— / 4</div><div class="small muted">Not the 56-indicator coverage</div></div><div class="card"><div class="label">Active NWS alerts</div><div class="stat" id="alertsCount">—</div><div class="small muted">Unique alerts across 3 locations</div></div></section>
+<section class="panel"><div class="card"><div class="label">Official checks passing</div><div class="stat" id="coverage">—</div><div class="small muted">Not the 56-indicator coverage</div></div><div class="card"><div class="label">Active NWS alerts</div><div class="stat" id="alertsCount">—</div><div class="small muted">Unique alerts across 3 locations</div></div></section>
 <section class="card"><h2>Data quality & health</h2><div id="health" class="footnote">Awaiting first run.</div><div class="footnote" style="margin-top:9px">GitHub scheduling is best effort, not real-time. Always follow official WEA, NWS and local emergency instructions.</div></section>
 <section class="card"><h2>Local weather alerts <span class="small muted">• NWS</span></h2><div id="alertList" class="small muted">Awaiting updates.</div></section>
+<section class="card"><h2>Ohio River forecast <span class="small muted">· Newburgh Lock and Dam</span></h2><div id="river-status">Waiting for source check.</div><a href="https://water.noaa.gov/gauges/nbgi3" target="_blank" rel="noopener">Official NOAA gauge</a></section>
+<section class="card"><h2>FAA ground stops</h2><div id="faa-status">Waiting for source check.</div><a href="https://nasstatus.faa.gov/" target="_blank" rel="noopener">FAA National Airspace System status</a></section>
+<section class="card"><h2>FEMA disaster declarations <span class="small muted">· Indiana and Kentucky</span></h2><div id="fema-status">Waiting for source check.</div><a href="https://www.fema.gov/disaster/declarations" target="_blank" rel="noopener">FEMA declarations</a></section>
 <section class="card" id="foreign"><h2>Foreign developments</h2><p id="foreign-status" class="footnote" aria-live="polite">Loading the latest reviewed briefing…</p><div id="foreign-items"></div><details id="foreign-references" hidden><summary>Official references and news sources</summary><div id="foreign-source-list"></div></details></section>
 <section class="card"><h2>Strategic Command tracks</h2><div id="tracks" class="small muted">Awaiting updates.</div></section>
 <section class="card"><h2>Cyber exposure intelligence <span class="small muted">• CISA</span></h2><div id="cyber" class="footnote">Awaiting updates.</div></section>
@@ -16,21 +19,22 @@ const $=x=>document.getElementById(x);const esc=s=>String(s??'').replace(/[&<>"'
 const sourceUrl=(value,fallback)=>{
   try {
     const url=new URL(value);
-    if(url.protocol==='https:' && ['api.weather.gov','www.weather.gov','www.cisa.gov'].includes(url.hostname)) return esc(url.href);
+    if(url.protocol==='https:' && ['api.weather.gov','www.weather.gov','www.cisa.gov','nasstatus.faa.gov','api.water.noaa.gov','www.fema.gov'].includes(url.hostname)) return esc(url.href);
   } catch {}
   return fallback;
 };
 const dt=s=>s?new Date(s).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'Pending';
 async function refresh(){try{const r=await fetch('./data.json?d='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();
 $('posture').textContent=d.status||'NOT ASSESSED';$('note').textContent=d.message||'No all-clear implied';$('updated').textContent='Last source check: '+dt(d.checked_at);
-const c=d.coverage||{};$('coverage').textContent=(c.feeds_ok??'—')+' / '+(c.feeds_total??4);$('alertsCount').textContent=d.alerts?.length??'—';
+const c=d.coverage||{};$('coverage').textContent=(c.feeds_ok??'—')+' / '+(c.feeds_total??'—');$('alertsCount').textContent=d.alerts?.length??'—';
 const h=d.health||{},fail=(h.errors||[]);let age=d.checked_at?(Date.now()-new Date(d.checked_at).getTime())/60000:Infinity;const stale=!Number.isFinite(age)||age>95;
 $('health').innerHTML=`<div class="${stale?'bad':'good'}">${stale?'STALE OR NO DATA':'Dataset age: '+Math.round(age)+' minutes'}</div>${fail.length?'<p class="error">Feed or notification issues: '+fail.map(esc).join(' · ')+'</p>':'<p>No reported fetch errors in this run.</p>'}<p>${h.pushover_enabled?'Pushover configured':'Push alerts not configured'}. Source checks are independent of notification status.</p>`;
 $('alertList').innerHTML=(d.alerts?.length?d.alerts.map(a=>`<div class="item"><h3>${esc(a.event)}</h3><div class="small muted">${esc(a.locations?.join(', '))} · ${esc(a.severity)} · Expires ${esc(dt(a.expires))}</div><p>${esc(a.title)}</p><a href="${sourceUrl(a.url,'https://www.weather.gov/')}" target="_blank" rel="noopener">Official alert</a></div>`).join(''):(d.sources?.some(s=>s.name.startsWith('NWS ')&&s.status==='ok')?'No active alerts returned by available feeds. Follow official warnings.':'Weather alert data unavailable.'));
 $('tracks').innerHTML=(d.tracks||[]).map(t=>`<div class="track"><div><strong>${esc(t.name)}</strong><div class="small muted" style="margin-top:3px">${esc(t.detail)}</div></div><span class="tag ${t.connection==='connected'?'on':'off'}">${esc(t.connection.replace('_',' '))}</span></div>`).join('');
 let cy=d.cyber||{};$('cyber').innerHTML=`<p>Catalog entries currently retrieved: <b>${esc(cy.kev_entries??'Unavailable')}</b></p><p>Exploited-vulnerability intelligence is NOT evidence of a current cyberattack. <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">Official source</a>.</p>`;
 $('sources').innerHTML=(d.sources||[]).map(s=>`<div class="item"><strong>${esc(s.name)}</strong> <span class="${s.status==='ok'?'good':'bad'}">${esc(s.status)}</span><div class="small muted">Checked ${esc(dt(s.checked_at))} · ${esc(s.count??'—')} observations</div><a href="${sourceUrl(s.url,'https://www.weather.gov/')}" target="_blank" rel="noopener">Source endpoint</a></div>`).join('');
-}catch(e){$('health').innerHTML='<div class="error">Dashboard could not load data. Do not infer an all-clear. Check GitHub Actions status.</div>';}}
+renderSupplementalFeeds(d.supplemental);
+}catch(e){renderSupplementalFeeds(null);$('health').innerHTML='<div class="error">Dashboard could not load data. Do not infer an all-clear. Check GitHub Actions status.</div>';}}
 const foreignLink = source => {
   let url;
   try { url = new URL(source.url); } catch { return ''; }
@@ -69,6 +73,56 @@ async function refreshForeign() {
     $('foreign-items').replaceChildren();
     $('foreign-references').hidden = true;
   }
+}
+
+function renderSupplementalFeeds(signals) {
+  const faa = signals?.faa;
+  const faaFresh = faa && Date.now() - Date.parse(faa.updated_at) <= 3600000;
+  const faaBody = faaFresh
+    ? `<p class="footnote">FAA report updated ${esc(dt(faa.updated_at))}.</p>`
+      + (faa.stops.length
+        ? faa.stops.map(stop => `<div class="item"><strong>${esc(stop.airport)}</strong>
+          <div>${esc(stop.reason || 'Cause unavailable')}</div>
+          <div class="footnote">Expected end ${esc(stop.end_time || 'unavailable')}</div></div>`).join('')
+        : '<p>No active ground stops reported in this FAA feed.</p>')
+    : '<p class="warning">FAA ground-stop data unavailable or stale.</p>';
+  $('faa-status').innerHTML = faaBody;
+
+  const river = signals?.river;
+  const observed = Date.now() - Date.parse(river?.observation?.valid_at) <= 6 * 3600000
+    ? river.observation : null;
+  const peak = Date.now() - Date.parse(river?.forecast_issued_at) <= 36 * 3600000
+    && Date.parse(river?.forecast_peak?.valid_at) >= Date.now() ? river.forecast_peak : null;
+  const thresholds = river?.thresholds;
+  const categories = {below_action: 'Below action stage', action: 'Action stage',
+    minor: 'Minor flood stage', moderate: 'Moderate flood stage', major: 'Major flood stage'};
+  $('river-status').innerHTML = `
+    <p>Observed river stage ${observed
+      ? `<strong>${esc(observed.stage)} ft</strong> <span class="footnote">· ${esc(dt(observed.valid_at))}</span>`
+      : '<span class="warning">Unavailable</span>'}</p>
+    <p>Highest upcoming forecast stage ${peak
+      ? `<strong>${esc(peak.stage)} ft</strong> <span class="footnote">· ${esc(dt(peak.valid_at))}</span>`
+      : '<span class="warning">Unavailable</span>'}</p>
+    ${peak ? `<p class="footnote">Forecast issued ${esc(dt(river.forecast_issued_at))} ·
+      <strong class="${river.forecast_category === 'below_action' ? '' : 'warning'}">${esc(categories[river.forecast_category])}</strong></p>` : ''}
+    ${thresholds ? `<p class="footnote">NOAA thresholds · Action ${esc(thresholds.action)} ft ·
+      Minor flooding ${esc(thresholds.minor)} ft · Moderate ${esc(thresholds.moderate)} ft · Major ${esc(thresholds.major)} ft</p>` : ''}`;
+
+  const fema = signals?.fema;
+  const declarationTypes = {DR: 'Major disaster', EM: 'Emergency', FM: 'Fire management'};
+  $('fema-status').innerHTML = !fema
+    ? '<p class="warning">FEMA declaration data unavailable.</p>'
+    : fema.declarations.length
+      ? `<p class="footnote">${esc(fema.count)} declarations in the last 180 days. Showing up to 12 most recent.</p>`
+        + fema.declarations.map(row => `<div class="item">
+          <h3>${esc(row.state)} · ${esc(declarationTypes[row.type] || row.type)} · ${esc(row.number)}</h3>
+          <div>${esc(row.title)}</div>
+          <div class="footnote">Declared ${esc(reviewDate(row.date))} · ${esc(row.area_count)}
+            designated ${row.area_count === 1 ? 'area' : 'areas'}</div>
+          ${row.local_areas.length ? `<div class="footnote">Tri-State areas listed · ${esc(row.local_areas.join(', '))}</div>` : ''}
+          <a href="https://www.fema.gov/disaster/${encodeURIComponent(row.number)}" target="_blank" rel="noopener">FEMA declaration details</a>
+        </div>`).join('')
+      : '<p>No Indiana or Kentucky declarations returned for the last 180 days.</p>';
 }
 
 function refreshDashboard() {

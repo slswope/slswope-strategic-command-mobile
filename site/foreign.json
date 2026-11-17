@@ -9,9 +9,21 @@
       "relevance": "Relevant to U.S.–Japan alliance coordination and regional air surveillance.",
       "watch": "Follow official identifications and any repeat activity. Taiwan’s air defense identification zone extends beyond its territorial airspace.",
       "sources": [
-        {"name": "Japan Ministry of Defense", "kind": "Official notice", "url": "https://www.mod.go.jp/j/press/news/2026/11/17c.pdf"},
-        {"name": "Reuters", "kind": "News reporting", "url": "https://www.reuters.com/business/aerospace-defense/taiwan-says-two-russian-military-aircraft-detected-off-its-east-coast-2026-11-17/"},
-        {"name": "Focus Taiwan (CNA)", "kind": "News reporting", "url": "https://focustaiwan.tw/politics/202611170014"}
+        {
+          "name": "Japan Ministry of Defense",
+          "kind": "Official notice",
+          "url": "https://www.mod.go.jp/j/press/news/2026/11/17c.pdf"
+        },
+        {
+          "name": "Reuters",
+          "kind": "News reporting",
+          "url": "https://www.reuters.com/business/aerospace-defense/taiwan-says-two-russian-military-aircraft-detected-off-its-east-coast-2026-11-17/"
+        },
+        {
+          "name": "Focus Taiwan (CNA)",
+          "kind": "News reporting",
+          "url": "https://focustaiwan.tw/politics/202611170014"
+        }
       ]
     },
     {
@@ -22,8 +34,16 @@
       "relevance": "The crossing supports Russian logistics into Crimea. Disruption could affect military movements and regional transport.",
       "watch": "Look for verified road, rail, and maritime restrictions and reopening notices.",
       "sources": [
-        {"name": "Associated Press", "kind": "News reporting", "url": "https://apnews.com/article/df4b867cf8f70e88843d8fefea5d643c"},
-        {"name": "Reuters via Investing.com", "kind": "News reporting", "url": "https://www.investing.com/news/commodities-news/ukraine-strikes-crimean-bridge-for-second-day-as-russia-pounds-kyiv-bridges-5032113"}
+        {
+          "name": "Associated Press",
+          "kind": "News reporting",
+          "url": "https://apnews.com/article/df4b867cf8f70e88843d8fefea5d643c"
+        },
+        {
+          "name": "Reuters via Investing.com",
+          "kind": "News reporting",
+          "url": "https://www.investing.com/news/commodities-news/ukraine-strikes-crimean-bridge-for-second-day-as-russia-pounds-kyiv-bridges-5032113"
+        }
       ]
     },
     {
@@ -34,8 +54,16 @@
       "relevance": "Repeated incidents in the strait could affect commercial shipping and energy transport.",
       "watch": "Follow new maritime warnings and watch for confirmed transit restrictions or rerouting.",
       "sources": [
-        {"name": "UKMTO warning 208-26", "kind": "Official notice based on a third-party report", "url": "https://www.ukmto.org/-/media/ukmto/products/20261116-ukmto_warning_208-26.pdf?rev=29246f8ab7714c10a7668e09cddcac15"},
-        {"name": "Reuters", "kind": "News reporting based on UKMTO", "url": "https://www.reuters.com/world/middle-east/crew-tanker-unaccounted-after-second-attack-north-omans-khasab-ukmto-says-2026-11-17/"}
+        {
+          "name": "UKMTO warning 208-26",
+          "kind": "Official notice based on a third-party report",
+          "url": "https://www.ukmto.org/-/media/ukmto/products/20261116-ukmto_warning_208-26.pdf?rev=29246f8ab7714c10a7668e09cddcac15"
+        },
+        {
+          "name": "Reuters",
+          "kind": "News reporting based on UKMTO",
+          "url": "https://www.reuters.com/world/middle-east/crew-tanker-unaccounted-after-second-attack-north-omans-khasab-ukmto-says-2026-11-17/"
+        }
       ]
     },
     {
@@ -46,16 +74,202 @@
       "relevance": "The launches are relevant to allied missile monitoring and joint readiness.",
       "watch": "Look for official updates on missile types and any subsequent launches.",
       "sources": [
-        {"name": "Associated Press", "kind": "News reporting citing South Korea’s military", "url": "https://apnews.com/article/036aa8b36ae8401f3c1b3bbb81e9b2ed"},
-        {"name": "Yonhap", "kind": "News reporting citing the same military statement", "url": "https://en.yna.co.kr/view/AEN20261104005551315"}
+        {
+          "name": "Associated Press",
+          "kind": "News reporting citing South Korea’s military",
+          "url": "https://apnews.com/article/036aa8b36ae8401f3c1b3bbb81e9b2ed"
+        },
+        {
+          "name": "Yonhap",
+          "kind": "News reporting citing the same military statement",
+          "url": "https://en.yna.co.kr/view/AEN20261104005551315"
+        }
       ]
     }
   ],
   "reference_sources": [
-    {"name": "ODNI 2026 Annual Threat Assessment", "kind": "Unclassified strategic baseline · March 2026", "url": "https://archive.dni.gov/files/ODNI/documents/assessments/ATA-2026-Unclassified-Report.pdf"},
-    {"name": "UK Maritime Trade Operations", "kind": "Recent maritime incident notices", "url": "https://www.ukmto.org/recent-incidents"},
-    {"name": "U.S. State Department", "kind": "Travel advisories", "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/"},
-    {"name": "Reuters World", "kind": "International news", "url": "https://www.reuters.com/world/"},
-    {"name": "Associated Press World", "kind": "International news", "url": "https://apnews.com/world-news"}
-  ]
+    {
+      "name": "ODNI 2026 Annual Threat Assessment",
+      "kind": "Unclassified strategic baseline · March 2026",
+      "url": "https://archive.dni.gov/files/ODNI/documents/assessments/ATA-2026-Unclassified-Report.pdf"
+    },
+    {
+      "name": "UK Maritime Trade Operations",
+      "kind": "Recent maritime incident notices",
+      "url": "https://www.ukmto.org/recent-incidents"
+    },
+    {
+      "name": "U.S. State Department",
+      "kind": "Travel advisories",
+      "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/"
+    },
+    {
+      "name": "Reuters World",
+      "kind": "International news",
+      "url": "https://www.reuters.com/world/"
+    },
+    {
+      "name": "Associated Press World",
+      "kind": "International news",
+      "url": "https://apnews.com/world-news"
+    }
+  ],
+  "indo_pacific_activity": {
+    "taiwan_reports": [
+      {
+        "date": "2026-11-17",
+        "sorties": 5,
+        "navy_ships": 6,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88278"
+      },
+      {
+        "date": "2026-11-16",
+        "sorties": 4,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88217"
+      },
+      {
+        "date": "2026-11-15",
+        "sorties": 1,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88215"
+      },
+      {
+        "date": "2026-11-14",
+        "sorties": 10,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88212"
+      },
+      {
+        "date": "2026-11-13",
+        "sorties": 30,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88210"
+      },
+      {
+        "date": "2026-11-12",
+        "sorties": 7,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88203"
+      },
+      {
+        "date": "2026-11-11",
+        "sorties": 4,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88195"
+      },
+      {
+        "date": "2026-11-10",
+        "sorties": 4,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88190"
+      },
+      {
+        "date": "2026-11-09",
+        "sorties": 1,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/EN/News/PLAAct/88171"
+      },
+      {
+        "date": "2026-11-08",
+        "sorties": 4,
+        "navy_ships": 6,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88168"
+      },
+      {
+        "date": "2026-11-07",
+        "sorties": 11,
+        "navy_ships": 10,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88166"
+      },
+      {
+        "date": "2026-11-06",
+        "sorties": 3,
+        "navy_ships": 9,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88159"
+      },
+      {
+        "date": "2026-11-05",
+        "sorties": 21,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88146"
+      },
+      {
+        "date": "2026-11-04",
+        "sorties": 22,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88141"
+      },
+      {
+        "date": "2026-11-03",
+        "sorties": 49,
+        "navy_ships": 6,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88121"
+      },
+      {
+        "date": "2026-11-02",
+        "sorties": 19,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88110"
+      },
+      {
+        "date": "2026-11-01",
+        "sorties": 32,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88102"
+      },
+      {
+        "date": "2026-10-31",
+        "sorties": 13,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88099"
+      },
+      {
+        "date": "2026-10-30",
+        "sorties": 6,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88097"
+      },
+      {
+        "date": "2026-10-29",
+        "sorties": 6,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88094"
+      },
+      {
+        "date": "2026-10-28",
+        "sorties": 6,
+        "navy_ships": 7,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88085"
+      },
+      {
+        "date": "2026-10-27",
+        "sorties": 3,
+        "navy_ships": 8,
+        "url": "https://www.mnd.gov.tw/en/News/PLAAct/88071"
+      }
+    ],
+    "taiwan_index": "https://www.mnd.gov.tw/En/news/plaactlist",
+    "japan_index": "https://www.mod.go.jp/js/press/index-en.html",
+    "japan_notices": [
+      {
+        "date": "2026-11-17",
+        "released": "2026-11-17",
+        "summary": "Japan reported two aircraft assessed to be Russian entered its territorial airspace near Fukuoka and that it scrambled fighters in response.",
+        "url": "https://www.mod.go.jp/j/press/news/2026/11/17c.pdf"
+      },
+      {
+        "date": "2026-11-11",
+        "released": "2026-11-17",
+        "summary": "Japan reported Chinese aircraft over the East China Sea and Pacific Ocean and said it scrambled fighters to monitor the activity.",
+        "url": "https://www.mod.go.jp/js/pdf/2026/p20261117_01e.pdf"
+      },
+      {
+        "date": "2026-11-10",
+        "released": "2026-11-12",
+        "summary": "Japan reported a Chinese aircraft over the East China Sea and said it scrambled fighters to monitor it.",
+        "url": "https://www.mod.go.jp/js/pdf/2026/p20261112_01e.pdf"
+      }
+    ]
+  }
 }

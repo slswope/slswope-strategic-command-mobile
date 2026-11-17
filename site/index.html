@@ -7,9 +7,10 @@
 <section class="card"><h2>Data quality & health</h2><div id="health" class="footnote">Awaiting first run.</div><div class="footnote" style="margin-top:9px">GitHub scheduling is best effort, not real-time. Always follow official WEA, NWS and local emergency instructions.</div></section>
 <section class="card"><h2>Local weather alerts <span class="small muted">• NWS</span></h2><div id="alertList" class="small muted">Awaiting updates.</div></section>
 <section class="card"><h2>Ohio River forecast <span class="small muted">· Newburgh Lock and Dam</span></h2><div id="river-status">Waiting for source check.</div><a href="https://water.noaa.gov/gauges/nbgi3" target="_blank" rel="noopener">Official NOAA gauge</a></section>
+<section class="card" id="ohio-river-locks"><h2>Ohio River lock status and queues</h2><div id="lock-status">Waiting for source check.</div><a href="https://ndc.ops.usace.army.mil/ords/r/lpms/corps-locks/home" target="_blank" rel="noopener">USACE Corps Locks</a></section>
 <section class="card"><h2>FAA ground stops</h2><div id="faa-status">Waiting for source check.</div><a href="https://nasstatus.faa.gov/" target="_blank" rel="noopener">FAA National Airspace System status</a></section>
 <section class="card"><h2>FEMA disaster declarations <span class="small muted">· Indiana and Kentucky</span></h2><div id="fema-status">Waiting for source check.</div><a href="https://www.fema.gov/disaster/declarations" target="_blank" rel="noopener">FEMA declarations</a></section>
-<section class="card" id="foreign"><h2>Foreign developments</h2><p id="foreign-status" class="footnote" aria-live="polite">Loading the latest reviewed briefing…</p><div id="foreign-items"></div><details id="foreign-references" hidden><summary>Official references and news sources</summary><div id="foreign-source-list"></div></details></section>
+<section class="card" id="foreign"><h2>Foreign developments</h2><p id="foreign-status" class="footnote" aria-live="polite">Loading the latest reviewed briefing…</p><div id="foreign-items"></div><section class="item" id="pacific-activity" hidden><h2>Taiwan–Japan activity watch</h2><div id="pacific-data"></div></section><details id="foreign-references" hidden><summary>Official references and news sources</summary><div id="foreign-source-list"></div></details></section>
 <section class="card"><h2>Strategic Command tracks</h2><div id="tracks" class="small muted">Awaiting updates.</div></section>
 <section class="card"><h2>Cyber exposure intelligence <span class="small muted">• CISA</span></h2><div id="cyber" class="footnote">Awaiting updates.</div></section>
 <section class="card"><h2>Source checks</h2><div id="sources" class="small muted">Awaiting updates.</div></section>
@@ -19,7 +20,7 @@ const $=x=>document.getElementById(x);const esc=s=>String(s??'').replace(/[&<>"'
 const sourceUrl=(value,fallback)=>{
   try {
     const url=new URL(value);
-    if(url.protocol==='https:' && ['api.weather.gov','www.weather.gov','www.cisa.gov','nasstatus.faa.gov','api.water.noaa.gov','www.fema.gov'].includes(url.hostname)) return esc(url.href);
+    if(url.protocol==='https:' && ['api.weather.gov','www.weather.gov','www.cisa.gov','nasstatus.faa.gov','api.water.noaa.gov','www.fema.gov','ndc.ops.usace.army.mil'].includes(url.hostname)) return esc(url.href);
   } catch {}
   return fallback;
 };
@@ -45,6 +46,51 @@ const foreignSources = sources => `<ul class="foreign-sources">${sources.map(for
 const reviewDate = date => new Date(date + 'T00:00:00Z').toLocaleDateString(undefined,
   { dateStyle: 'medium', timeZone: 'UTC' });
 
+function renderPacificActivity(activity) {
+  if (!activity?.taiwan_reports || activity.taiwan_reports.length < 2) {
+    $('pacific-activity').hidden = true;
+    return;
+  }
+  const [latest, ...baseline] = activity.taiwan_reports;
+  const summarize = key => {
+    const values = baseline.map(row => row[key]).sort((a, b) => a - b);
+    const mid = Math.floor(values.length / 2);
+    return {low: values[0], high: values.at(-1),
+      median: values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2};
+  };
+  const sorties = summarize('sorties');
+  const ships = summarize('navy_ships');
+  const peak = baseline.find(row => row.sorties === sorties.high);
+  const outside = latest.sorties > sorties.high || latest.sorties < sorties.low
+    || latest.navy_ships > ships.high || latest.navy_ships < ships.low;
+  $('pacific-data').innerHTML = `
+    <h3>Taiwan · PLA activity</h3>
+    <p>Report ending ${esc(reviewDate(latest.date))} at 6 a.m. Taiwan time · <strong>${esc(latest.sorties)} PLA aircraft sorties</strong>
+      and <strong>${esc(latest.navy_ships)} PLA Navy ships</strong>.</p>
+    <p class="footnote">Prior ${baseline.length} daily reports, ${esc(reviewDate(baseline.at(-1).date))}
+      through ${esc(reviewDate(baseline[0].date))}. Median ${sorties.median} sorties (range ${sorties.low}–${sorties.high})
+      and ${ships.median} navy ships (range ${ships.low}–${ships.high}).</p>
+    <p class="${outside ? 'warning' : 'footnote'}">${outside ? 'One or more latest counts are outside this comparison range.'
+      : 'Both latest counts are within this comparison range.'} Peak during the comparison period:
+      ${sorties.high} sorties on ${esc(reviewDate(peak.date))}.</p>
+    <p class="footnote">The short comparison uses Taiwan’s reported detections. Changes can reflect reporting or operations and need event-level verification.</p>
+    <details><summary>View ${activity.taiwan_reports.length} daily source reports</summary>
+      <ul class="foreign-sources">${activity.taiwan_reports.map(row => foreignLink({
+        name: reviewDate(row.date), url: row.url, kind: `${row.sorties} sorties · ${row.navy_ships} navy ships`
+      })).join('')}</ul>
+    </details>
+    <h3 style="margin-top:16px">Japan · Selected official notices</h3>
+    <p class="footnote">Japan’s event notices track specific observations and responses. Taiwan’s daily counts use a different reporting method.</p>
+    ${activity.japan_notices.map(row => `<div class="item"><div class="footnote">
+      Activity ${esc(reviewDate(row.date))} · Published ${esc(reviewDate(row.released))}</div>
+      <p>${esc(row.summary)}</p>${foreignSources([{name:'Japan Ministry of Defense',kind:'Official notice',url:row.url}])}</div>`).join('')}
+    ${foreignSources([
+      {name:'Taiwan defense ministry',kind:'Daily report index',url:activity.taiwan_index},
+      {name:'Japan Joint Staff',kind:'Official press archive',url:activity.japan_index}
+    ])}`;
+  $('pacific-activity').hidden = false;
+}
+
 async function refreshForeign() {
   try {
     const response = await fetch('./foreign.json?d=' + Date.now(), { cache: 'no-store' });
@@ -65,6 +111,7 @@ async function refreshForeign() {
         <p class="footnote"><strong>What to watch</strong> ${esc(item.watch)}</p>
         ${foreignSources(item.sources)}
       </article>`).join('');
+    renderPacificActivity(briefing.indo_pacific_activity);
     $('foreign-source-list').innerHTML = foreignSources(briefing.reference_sources);
     $('foreign-references').hidden = false;
   } catch {
@@ -72,10 +119,25 @@ async function refreshForeign() {
     $('foreign-status').classList.add('warning');
     $('foreign-items').replaceChildren();
     $('foreign-references').hidden = true;
+    $('pacific-activity').hidden = true;
   }
 }
 
 function renderSupplementalFeeds(signals) {
+  const lockStatus = signals?.locks;
+  const locksFresh = lockStatus && Date.now() - Date.parse(lockStatus.checked_at) <= 95 * 60000;
+  const lockValue = (value, unit = '') => value == null ? 'Unavailable' : esc(value) + unit;
+  $('lock-status').innerHTML = !locksFresh
+    ? '<p class="warning">Corps lock data unavailable or stale.</p>'
+    : `<p class="footnote">Corps Locks checked ${esc(dt(lockStatus.checked_at))}.</p>`
+      + (lockStatus.locks.length < 3 ? '<p class="warning">Some lock readings unavailable.</p>' : '')
+      + lockStatus.locks.map(lock => `<article class="item"><h3>${esc(lock.name)}</h3>
+        <div>Pending arrivals <strong>${lockValue(lock.pending)}</strong> · Locking <strong>${lockValue(lock.locking)}</strong></div>
+        <div>24-hour average delay <strong>${lockValue(lock.average_delay, ' min')}</strong></div>
+        <div class="footnote">Reported reading ${esc(lock.recorded_at)} (Corps time)</div>
+        ${lock.notes ? `<details><summary>Operator notes</summary><p class="footnote" style="white-space:pre-line;overflow-wrap:anywhere">${esc(lock.notes)}</p></details>` : ''}
+      </article>`).join('');
+
   const faa = signals?.faa;
   const faaFresh = faa && Date.now() - Date.parse(faa.updated_at) <= 3600000;
   const faaBody = faaFresh

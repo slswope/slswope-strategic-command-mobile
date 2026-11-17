@@ -21,10 +21,11 @@ KEV_URL='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerab
 FAA_URL = 'https://nasstatus.faa.gov/api/airport-status-information'
 RIVER_URL = 'https://api.water.noaa.gov/nwps/v1/gauges/NBGI3'
 FEMA_URL = 'https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries'
+CORPS_LOCKS_URL = 'https://ndc.ops.usace.army.mil/ords/lpms/lock_status_report_json?in_river_code=OH'
 TRACKS=[
  ('Immediate hazards','connected','NWS point alerts and the NOAA Newburgh river forecast'),
  ('Service continuity','partial','FAA ground stops. Telecom, payments and hospitals have no automated coverage.'),
- ('Supply chain / markets','unconnected','EIA/transport/retail checks pending'),
+ ('Supply chain / markets','partial','Ohio River lock queues and delays from USACE'),
  ('Global security','partial','See the dated, manually reviewed foreign developments briefing'),
  ('Political / governance','partial','FEMA disaster declarations for Indiana and Kentucky. Local restrictions have no automated coverage.'),
  ('Public preparedness intent','unconnected','Search/retail indicators require backtesting'),
@@ -162,6 +163,46 @@ def parse_declarations(payload):
             for row in ordered]
 
 
+def parse_corps_locks(payload, now):
+    if not isinstance(payload, list):
+        raise ValueError('Unexpected Corps Locks response')
+    rivers = [river for river in payload if river.get('riverName') == 'OHIO RIVER']
+    if len(rivers) != 1:
+        raise ValueError('Ohio River missing from Corps Locks response')
+    expected = {'75': 'Cannelton', '76': 'Newburgh', '77': 'John T. Myers'}
+    records = {}
+    for lock in rivers[0]['locks']:
+        number = lock.get('lockNumber')
+        if number not in expected:
+            continue
+        name = expected[number]
+        if name.lower() not in lock['lockName'].lower() or name in records:
+            raise ValueError('Unexpected or duplicate Ohio River lock')
+        reading = datetime.datetime.strptime(lock['readingEntryDateTime'], '%m%d%y:%H%M')
+        if not now.date() - datetime.timedelta(days=1) <= reading.date() <= now.date():
+            continue
+        values = {}
+        for key, field in [('pending', 'totalPendingArrivals'), ('locking', 'totalLocking'),
+                           ('average_delay', 'average24HourDelay')]:
+            value = lock.get(field)
+            values[key] = value if type(value) in (int, float) and math.isfinite(value) and value >= 0 else None
+        if all(value is None for value in values.values()):
+            continue
+        records[name] = {
+            'name': name, 'recorded_at': reading.strftime('%Y-%m-%d %H:%M'),
+            'notes': (lock.get('notes') or '').strip(), **values,
+        }
+    if not records:
+        raise ValueError('No recent local lock readings')
+    return {'checked_at': now.isoformat(), 'locks': [records[name] for name in expected.values() if name in records]}
+
+
+def collect_corps_locks():
+    # The Corps legacy endpoint can include literal newlines inside operator notes.
+    payload = json.loads(get_document(CORPS_LOCKS_URL, 'application/json'), strict=False)
+    return parse_corps_locks(payload, NOW)
+
+
 def collect_supplemental_feeds(feeds, errors):
     signals = {}
     query = fema_query(NOW)
@@ -172,6 +213,7 @@ def collect_supplemental_feeds(feeds, errors):
          lambda: parse_river_stage(get_json(RIVER_URL), get_json(RIVER_URL + '/stageflow'), NOW)),
         ('fema', 'OpenFEMA declarations for Indiana and Kentucky', query,
          lambda: parse_declarations(get_json(query))),
+        ('locks', 'USACE Ohio River lock status', CORPS_LOCKS_URL, collect_corps_locks),
     )
     for key, name, url, collect in sources:
         feed = {'name': name, 'status': 'ok', 'checked_at': STAMP, 'url': url}
@@ -188,6 +230,13 @@ def collect_supplemental_feeds(feeds, errors):
             if key == 'fema':
                 feed['count'] = len(signal)
                 signal = {'count': len(signal), 'declarations': signal[:12]}
+            if key == 'locks':
+                feed['count'] = len(signal['locks'])
+                if feed['count'] != 3 or any(
+                    lock[field] is None for lock in signal['locks'] for field in ('pending', 'locking', 'average_delay')
+                ):
+                    feed.update(status='partial', note='Some lock readings unavailable')
+                    errors.append(name + ': ' + feed['note'])
             signals[key] = signal
         except (ValueError, TypeError, KeyError, AttributeError, ET.ParseError, OSError) as exc:
             errors.append(f'{name}: {type(exc).__name__}')

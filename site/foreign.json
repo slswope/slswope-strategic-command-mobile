@@ -1,0 +1,61 @@
+{
+  "reviewed_on": "2026-11-17",
+  "developments": [
+    {
+      "region": "Indo-Pacific · Taiwan / Japan",
+      "date": "2026-11-17",
+      "title": "Japan and Taiwan report Russian military aircraft activity",
+      "summary": "Japan’s defense ministry reported that two aircraft it assessed to be Russian briefly entered Japanese territorial airspace near Fukuoka. Taiwan reported two Russian sorties in its air defense identification zone east of the island.",
+      "relevance": "Relevant to U.S.–Japan alliance coordination and regional air surveillance.",
+      "watch": "Follow official identifications and any repeat activity. Taiwan’s air defense identification zone extends beyond its territorial airspace.",
+      "sources": [
+        {"name": "Japan Ministry of Defense", "kind": "Official notice", "url": "https://www.mod.go.jp/j/press/news/2026/11/17c.pdf"},
+        {"name": "Reuters", "kind": "News reporting", "url": "https://www.reuters.com/business/aerospace-defense/taiwan-says-two-russian-military-aircraft-detected-off-its-east-coast-2026-11-17/"},
+        {"name": "Focus Taiwan (CNA)", "kind": "News reporting", "url": "https://focustaiwan.tw/politics/202611170014"}
+      ]
+    },
+    {
+      "region": "Europe · Russia / Ukraine",
+      "date": "2026-11-17",
+      "title": "Attack damages the Kerch Bridge",
+      "summary": "Ukraine said it struck the bridge connecting Russia to occupied Crimea. Russia’s Investigative Committee acknowledged damage. The extent of structural damage and the status of road and rail service remained uncertain in the initial reporting.",
+      "relevance": "The crossing supports Russian logistics into Crimea. Disruption could affect military movements and regional transport.",
+      "watch": "Look for verified road, rail, and maritime restrictions and reopening notices.",
+      "sources": [
+        {"name": "Associated Press", "kind": "News reporting", "url": "https://apnews.com/article/df4b867cf8f70e88843d8fefea5d643c"},
+        {"name": "Reuters via Investing.com", "kind": "News reporting", "url": "https://www.investing.com/news/commodities-news/ukraine-strikes-crimean-bridge-for-second-day-as-russia-pounds-kyiv-bridges-5032113"}
+      ]
+    },
+    {
+      "region": "Middle East · Strait of Hormuz",
+      "date": "2026-11-16",
+      "title": "UK maritime authority reports tanker attacks near Oman",
+      "summary": "UK Maritime Trade Operations issued notices after reports of strikes involving a tanker in the Strait of Hormuz and near Khasab. Reuters reported on Nov. 17 that the crew’s whereabouts were unknown after the second strike, citing UKMTO. The attacker and extent of damage remain unconfirmed in these reports.",
+      "relevance": "Repeated incidents in the strait could affect commercial shipping and energy transport.",
+      "watch": "Follow new maritime warnings and watch for confirmed transit restrictions or rerouting.",
+      "sources": [
+        {"name": "UKMTO warning 208-26", "kind": "Official notice based on a third-party report", "url": "https://www.ukmto.org/-/media/ukmto/products/20261116-ukmto_warning_208-26.pdf?rev=29246f8ab7714c10a7668e09cddcac15"},
+        {"name": "Reuters", "kind": "News reporting based on UKMTO", "url": "https://www.reuters.com/world/middle-east/crew-tanker-unaccounted-after-second-attack-north-omans-khasab-ukmto-says-2026-11-17/"}
+      ]
+    },
+    {
+      "region": "Indo-Pacific · Korean Peninsula",
+      "date": "2026-11-04",
+      "title": "South Korea reports multiple North Korean missile launches",
+      "summary": "South Korea’s Joint Chiefs of Staff reported multiple launches toward waters east of North Korea. Associated Press and Yonhap both cited the South Korean military, which said it was analyzing the launches with U.S. counterparts.",
+      "relevance": "The launches are relevant to allied missile monitoring and joint readiness.",
+      "watch": "Look for official updates on missile types and any subsequent launches.",
+      "sources": [
+        {"name": "Associated Press", "kind": "News reporting citing South Korea’s military", "url": "https://apnews.com/article/036aa8b36ae8401f3c1b3bbb81e9b2ed"},
+        {"name": "Yonhap", "kind": "News reporting citing the same military statement", "url": "https://en.yna.co.kr/view/AEN20261104005551315"}
+      ]
+    }
+  ],
+  "reference_sources": [
+    {"name": "ODNI 2026 Annual Threat Assessment", "kind": "Unclassified strategic baseline · March 2026", "url": "https://archive.dni.gov/files/ODNI/documents/assessments/ATA-2026-Unclassified-Report.pdf"},
+    {"name": "UK Maritime Trade Operations", "kind": "Recent maritime incident notices", "url": "https://www.ukmto.org/recent-incidents"},
+    {"name": "U.S. State Department", "kind": "Travel advisories", "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/"},
+    {"name": "Reuters World", "kind": "International news", "url": "https://www.reuters.com/world/"},
+    {"name": "Associated Press World", "kind": "International news", "url": "https://apnews.com/world-news"}
+  ]
+}

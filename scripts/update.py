@@ -22,18 +22,112 @@ FAA_URL = 'https://nasstatus.faa.gov/api/airport-status-information'
 RIVER_URL = 'https://api.water.noaa.gov/nwps/v1/gauges/NBGI3'
 FEMA_URL = 'https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries'
 CORPS_LOCKS_URL = 'https://ndc.ops.usace.army.mil/ords/lpms/lock_status_report_json?in_river_code=OH'
-TRACKS=[
- ('Immediate hazards','connected','NWS point alerts and the NOAA Newburgh river forecast'),
- ('Service continuity','partial','FAA ground stops. Telecom, payments and hospitals have no automated coverage.'),
- ('Supply chain / markets','partial','Ohio River lock queues and delays from USACE'),
- ('Global security','partial','See the dated, manually reviewed foreign developments briefing'),
- ('Political / governance','partial','FEMA disaster declarations for Indiana and Kentucky. Local restrictions have no automated coverage.'),
- ('Public preparedness intent','unconnected','Search/retail indicators require backtesting'),
- ('Overall','not_assessed','No national collapse prediction or all-clear derived'),
- ('Cyber & digital infrastructure','partial','CISA KEV exposure intelligence, not cyber incidents'),
- ('Local essential services','unconnected','Utility/water/operator APIs pending'),
- ('Cross-track correlation','partial','Duplicate NWS alert IDs merged; cross-provider correlation pending'),
+WATER_URL = (
+    'https://services7.arcgis.com/CpU55e5tQz42Nf6c/ArcGIS/rest/services/'
+    'Boil_Advisory_Area_Public/FeatureServer/0/query?' + urllib.parse.urlencode({
+        'where': "Status = 'Active'", 'outFields': 'OBJECTID,Status,IssuedDate',
+        'returnGeometry': 'false', 'f': 'json',
+    })
+)
+CLOUDFLARE_URL = 'https://www.cloudflarestatus.com/api/v2/summary.json'
+STRIPE_URL = 'https://www.stripestatus.com/api/v2/summary.json'
+IC3_URL = 'https://www.ic3.gov/CSA/rss'
+
+# A requirement can use a feed, a reviewed briefing, or a direct source link.
+# Source links leave a coverage gap until a monitor or review process is connected.
+TRACKS = [
+    ('Immediate hazards', (
+        ('Tri-State NWS weather alerts', 'nws'),
+        ('Newburgh river stage and forecast', 'river'),
+    )),
+    ('Service continuity', (
+        ('FAA ground stops', 'faa'),
+        ('Cloudflare internet infrastructure', 'cloudflare'),
+        ('Stripe payments', 'stripe'),
+        ('Local telecommunications', None, 'https://www.fcc.gov/general/disaster-information-reporting-system-dirs-0'),
+        ('Local hospital service disruptions', None),
+    )),
+    ('Supply chain / markets', (
+        ('Ohio River lock queues and delays', 'locks'),
+        ('Midwest fuel prices', None, 'https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_r20_w.htm'),
+        ('Global supply-chain pressure', None, 'https://www.newyorkfed.org/research/policy/gscpi'),
+        ('Freight corridor closures', None, 'https://511in.org/'),
+        ('Local retail inventory', None),
+    )),
+    ('Global security', (
+        ('Reviewed foreign briefing and Taiwan–Japan watch', 'briefing'),
+        ('Official military activity updates', None, 'https://www.mnd.gov.tw/En/news/plaactlist'),
+        ('Maritime security advisory changes', None, 'https://www.maritime.dot.gov/msci-advisories'),
+    )),
+    ('Political / governance', (
+        ('Indiana and Kentucky FEMA declarations', 'fema'),
+        ('County travel restrictions', None, 'https://www.in.gov/dhs/travel-advisory-map/'),
+        ('Local emergency and reopening orders', None),
+        ('State executive actions', None),
+    )),
+    ('Public preparedness intent', (
+        ('FEMA household survey baseline', None, 'https://www.fema.gov/sites/default/files/documents/fema_icpd_2024-national-household-survey-on-disaster-preparedness-findings_05072025.pdf'),
+        ('Backtested search-interest trends', None, 'https://developers.google.com/search/apis/trends'),
+        ('Backtested retail preparedness indicators', None),
+    )),
+    ('Cyber & digital infrastructure', (
+        ('CISA known exploited vulnerabilities', 'kev'),
+        ('FBI IC3 industry cyber advisories', 'ic3'),
+        ('Material company incident filings', None, 'https://www.sec.gov/search-filings/edgar-application-programming-interfaces'),
+        ('Confirmed operator cyber impacts', None),
+    )),
+    ('Local essential services', (
+        ('Evansville Water and Sewer Utility boil advisories', 'water'),
+        ('Southwest Indiana electricity outage maps', None, 'https://www.in.gov/iurc/energy-division/electricity-industry/utility-outages/'),
+        ('Henderson Municipal Power & Light outages', None, 'https://www.hmpl.com/outage-info.html'),
+        ('Henderson Water Utility boil advisories', None, 'https://www.hkywater.org/226/Boil-Water-Advisories'),
+        ('Newburgh-area drinking water service territories and alerts', None),
+        ('Wastewater service disruptions', None),
+    )),
+    ('Cross-track correlation', (
+        ('Merge duplicate NWS alerts', 'nws'),
+        ('Match independent events by location and time', None),
+        ('Verify shared causes and changes in status', None),
+    )),
 ]
+
+
+def track_coverage(feeds, briefing_date):
+    tracks = []
+    for name, requirements in TRACKS:
+        indicators = []
+        for label, key, *links in requirements:
+            matching = [feed for feed in feeds if key is not None and feed['key'] == key]
+            indicator = {'label': label, 'mode': 'automatic' if key else 'pending'}
+            if links:
+                indicator.update(mode='link only', url=links[0])
+            if key == 'briefing':
+                indicator.update(mode='reviewed', reviewed_on=briefing_date, url='#foreign')
+            if key and key != 'briefing':
+                states = [feed['status'] for feed in matching]
+                if states and all(state == 'ok' for state in states):
+                    health = 'current'
+                elif any(state in ('ok', 'partial') for state in states):
+                    health = 'degraded'
+                else:
+                    health = 'unavailable'
+                indicator.update(health=health, checked_at=matching[0]['checked_at'] if matching else None)
+            indicators.append(indicator)
+        covered = sum(item['mode'] == 'automatic' or bool(item.get('reviewed_on')) for item in indicators)
+        connection = 'connected' if covered == len(indicators) else 'partial' if covered else 'unconnected'
+        tracks.append({'name': name, 'connection': connection, 'covered': covered, 'required': len(indicators),
+                       'indicators': indicators})
+    return tracks
+
+
+def briefing_review_date():
+    try:
+        briefing = json.loads((ROOT / 'site' / 'foreign.json').read_text())
+        review = datetime.date.fromisoformat(briefing['reviewed_on'])
+        return review.isoformat() if briefing['developments'] else None
+    except (OSError, ValueError, TypeError, KeyError):
+        return None
+
 
 def get_document(url, accept):
     headers = {**HEADERS, 'Accept': accept}
@@ -203,6 +297,79 @@ def collect_corps_locks():
     return parse_corps_locks(payload, NOW)
 
 
+def parse_evsu_water(payload):
+    if 'error' in payload or payload.get('exceededTransferLimit') or not isinstance(payload.get('features'), list):
+        raise ValueError('Invalid or incomplete Evansville water query')
+    notices = []
+    ids = set()
+    for feature in payload['features']:
+        row = feature['attributes']
+        if row['Status'] != 'Active':
+            raise ValueError('Evansville water query included a non-active advisory')
+        identifier = row['OBJECTID']
+        if identifier in ids:
+            continue
+        ids.add(identifier)
+        issued = row.get('IssuedDate')
+        notices.append(datetime.datetime.fromtimestamp(issued / 1000, datetime.timezone.utc).isoformat()
+                       if issued is not None else None)
+    return {'active_count': len(notices), 'issued_at': sorted(notices, key=lambda value: value or '', reverse=True)}
+
+
+def parse_provider_status(payload, provider_id, host):
+    status = payload['status']
+    page = payload['page']
+    if page['id'] != provider_id or status['indicator'] not in ('none', 'minor', 'major', 'critical', 'maintenance'):
+        raise ValueError('Unexpected provider status response')
+    incidents = []
+    for row in payload['incidents']:
+        url = urllib.parse.urlsplit(row['shortlink'])
+        if url.scheme != 'https' or url.hostname not in (host, 'stspg.io'):
+            raise ValueError('Unexpected incident link')
+        incidents.append({'title': row['name'], 'status': row['status'], 'url': row['shortlink']})
+    return {'status': status['description'], 'indicator': status['indicator'], 'incidents': incidents,
+            'updated_at': read_station_time(page['updated_at']).isoformat()}
+
+
+def parse_ic3_advisories(document):
+    root = ET.fromstring(document)
+    channel = root.find('channel')
+    if root.tag != 'rss' or channel is None or channel.findtext('title') != 'IC3.gov Industry Alerts':
+        raise ValueError('Unexpected FBI advisory feed')
+    results = []
+    for item in channel.findall('item')[:5]:
+        url = urllib.parse.urlsplit(item.findtext('link', ''))
+        title = item.findtext('title', '').strip()
+        if not title or url.scheme != 'https' or url.hostname != 'www.ic3.gov' or not url.path.startswith('/CSA/'):
+            raise ValueError('Invalid FBI industry advisory')
+        results.append({'title': title, 'url': url.geturl(),
+                        'published_at': parsedate_to_datetime(item.findtext('pubDate', '')).isoformat()})
+    return results
+
+
+def local_operations(feeds, supplemental, alerts):
+    local_keys = {'nws', 'river', 'water'}
+    gaps = [feed['name'] for feed in feeds if feed['key'] in local_keys and feed['status'] != 'ok']
+    notices = []
+    if alerts:
+        notices.append(f'{len(alerts)} active NWS ' + ('alert' if len(alerts) == 1 else 'alerts'))
+    river = supplemental.get('river') or {}
+    flood = river.get('forecast_category')
+    if flood in ('action', 'minor', 'moderate', 'major'):
+        notices.append('Newburgh forecast reaches ' + (flood + ' flood stage' if flood != 'action' else 'action stage'))
+    water = supplemental.get('water') or {}
+    count = water.get('active_count', 0)
+    if count:
+        notices.append(f'{count} active Evansville utility boil-advisory ' + ('area' if count == 1 else 'areas'))
+    if notices:
+        title = 'Active local notices'
+    elif gaps:
+        title = 'Local checks incomplete'
+    else:
+        title = 'No active notices in checked feeds'
+    return {'title': title, 'notices': notices, 'gaps': gaps}
+
+
 def collect_supplemental_feeds(feeds, errors):
     signals = {}
     query = fema_query(NOW)
@@ -214,9 +381,16 @@ def collect_supplemental_feeds(feeds, errors):
         ('fema', 'OpenFEMA declarations for Indiana and Kentucky', query,
          lambda: parse_declarations(get_json(query))),
         ('locks', 'USACE Ohio River lock status', CORPS_LOCKS_URL, collect_corps_locks),
+        ('water', 'Evansville utility boil advisories', WATER_URL, lambda: parse_evsu_water(get_json(WATER_URL))),
+        ('cloudflare', 'Cloudflare status', CLOUDFLARE_URL,
+         lambda: parse_provider_status(get_json(CLOUDFLARE_URL), 'yh6f0r4529hb', 'www.cloudflarestatus.com')),
+        ('stripe', 'Stripe status', STRIPE_URL,
+         lambda: parse_provider_status(get_json(STRIPE_URL), 'd5zv7xbys5v3', 'www.stripestatus.com')),
+        ('ic3', 'FBI IC3 industry cyber advisories', IC3_URL,
+         lambda: parse_ic3_advisories(get_document(IC3_URL, 'application/rss+xml'))),
     )
     for key, name, url, collect in sources:
-        feed = {'name': name, 'status': 'ok', 'checked_at': STAMP, 'url': url}
+        feed = {'key': key, 'name': name, 'status': 'ok', 'checked_at': STAMP, 'url': url}
         try:
             signal = collect()
             if key == 'faa':
@@ -237,6 +411,12 @@ def collect_supplemental_feeds(feeds, errors):
                 ):
                     feed.update(status='partial', note='Some lock readings unavailable')
                     errors.append(name + ': ' + feed['note'])
+            if key == 'water':
+                feed['count'] = signal['active_count']
+            if key in ('cloudflare', 'stripe'):
+                feed.update(count=len(signal['incidents']), updated_at=signal['updated_at'])
+            if key == 'ic3':
+                feed['count'] = len(signal)
             signals[key] = signal
         except (ValueError, TypeError, KeyError, AttributeError, ET.ParseError, OSError) as exc:
             errors.append(f'{name}: {type(exc).__name__}')
@@ -289,10 +469,10 @@ def main():
                 if a['id'] not in alerts_by_id:alerts_by_id[a['id']]=a
                 if place not in alerts_by_id[a['id']]['locations']:alerts_by_id[a['id']]['locations'].append(place)
                 count+=1
-            feeds.append({'name':f'NWS {place}','status':'ok','checked_at':STAMP,'count':count,'url':url})
+            feeds.append({'key':'nws','name':f'NWS {place}','status':'ok','checked_at':STAMP,'count':count,'url':url})
         except Exception as exc:
             errors.append(f'NWS {place}: {type(exc).__name__}')
-            feeds.append({'name':f'NWS {place}','status':'error','checked_at':STAMP,'url':url,'note':'Fetch failed; not an all-clear'})
+            feeds.append({'key':'nws','name':f'NWS {place}','status':'error','checked_at':STAMP,'url':url,'note':'Fetch failed; not an all-clear'})
     kev_count=None;kev_recent=[]
     try:
         kev=get_json(KEV_URL)
@@ -302,10 +482,10 @@ def main():
         kev_count=len(entries)
         kev_recent=[{'vendor':str(v.get('vendorProject',''))[:100],'product':str(v.get('product',''))[:100],
                      'cve':v.get('cveID',''),'added':v.get('dateAdded','')} for v in entries[-8:]]
-        feeds.append({'name':'CISA Known Exploited Vulnerabilities','status':'ok','checked_at':STAMP,'count':kev_count,'url':KEV_URL})
+        feeds.append({'key':'kev','name':'CISA Known Exploited Vulnerabilities','status':'ok','checked_at':STAMP,'count':kev_count,'url':KEV_URL})
     except Exception as exc:
         errors.append(f'CISA KEV: {type(exc).__name__}')
-        feeds.append({'name':'CISA Known Exploited Vulnerabilities','status':'error','checked_at':STAMP,'url':KEV_URL,'note':'Fetch failed; not an all-clear'})
+        feeds.append({'key':'kev','name':'CISA Known Exploited Vulnerabilities','status':'error','checked_at':STAMP,'url':KEV_URL,'note':'Fetch failed; not an all-clear'})
     alerts=sorted(alerts_by_id.values(),key=lambda a:(not is_actionable(a),a['event']))
     token=os.environ.get('PUSHOVER_APP_TOKEN','');user=os.environ.get('PUSHOVER_USER_KEY','')
     push_enabled=bool(token and user)
@@ -332,7 +512,8 @@ def main():
       'supplemental': supplemental,
       'sources':feeds,'alerts':alerts,'high_priority_alerts':sum(is_actionable(a) for a in alerts),
       'cyber':{'kev_entries':kev_count,'latest_sample':kev_recent,'interpretation':'A KEV listing indicates known exploited vulnerability; it is not confirmation of an attack or outage.'},
-      'tracks':[{'name':n,'connection':c,'detail':d} for n,c,d in TRACKS],
+      'tracks': track_coverage(feeds, briefing_review_date()),
+      'local_operations': local_operations(feeds, supplemental, alerts),
       'health':{'all_sources_ok':all_ok,'errors':errors,'pushover_enabled':push_enabled,'push_sent_this_run':push_sent},
       'source_references':[NWS_DOCS,KEV_URL,'https://www.cisa.gov/known-exploited-vulnerabilities-catalog']}
     (ROOT/'site'/'data.json').write_text(json.dumps(output,indent=2,ensure_ascii=False)+'\n')

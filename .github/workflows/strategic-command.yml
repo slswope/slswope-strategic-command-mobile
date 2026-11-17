@@ -20,6 +20,8 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
   monitor-and-publish:
     needs: tests
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
@@ -55,3 +57,15 @@ jobs:
       - name: Publish dashboard
         id: deployment
         uses: actions/deploy-pages@v4
+  verify-mobile:
+    needs: monitor-and-publish
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the published dashboard at phone widths
+        env:
+          DASHBOARD_URL: ${{ needs.monitor-and-publish.outputs.page_url }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/dashboard-check" --no-save playwright@1.58.2
+          NODE_PATH="$RUNNER_TEMP/dashboard-check/node_modules" node tests/mobile-smoke.cjs
